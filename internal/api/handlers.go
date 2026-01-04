@@ -6,6 +6,7 @@ import (
 
 	"github.com/eulerbutcooler/hermes-core/internal/models"
 	"github.com/eulerbutcooler/hermes-core/internal/store"
+	"github.com/go-chi/chi/v5"
 )
 
 type Handler struct {
@@ -36,4 +37,13 @@ func (h *Handler) CreateRelay(w http.ResponseWriter, r *http.Request) {
 		"status":   "success",
 		"relay_id": id,
 	})
+}
+
+func (h *Handler) GetRelayLogs(w http.ResponseWriter, r *http.Request) {
+	relayID := chi.URLParam(r, "relayID")
+	logs, err := h.store.GetLogs(r.Context(), relayID)
+	if err != nil {
+		http.Error(w, "Failed to fetch logs", http.StatusInternalServerError)
+	}
+	json.NewEncoder(w).Encode(logs)
 }

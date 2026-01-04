@@ -26,6 +26,7 @@ func NewRouter(h *Handler) *chi.Mux {
 
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Post("/relays", h.CreateRelay)
+		r.Get("/relays/{relayID}/logs", h.GetRelayLogs)
 	})
 
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {

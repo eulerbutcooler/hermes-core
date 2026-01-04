@@ -10,6 +10,13 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+type ExecutionLog struct {
+	ID         int    `json:"id"`
+	Status     string `json:"status"`
+	Details    string `json:"details"`
+	ExecutedAt string `json:"executed_at"`
+}
+
 type RelayStore struct {
 	db *pgxpool.Pool
 }
@@ -44,4 +51,26 @@ func (s *RelayStore) CreateRelay(ctx context.Context, req models.CreateRelayRequ
 		return "", err
 	}
 	return relayID.String(), nil
+}
+
+func (s *RelayStore) GetLogs(ctx context.Context, relayID string) ([]ExecutionLog, error) {
+	query := `SELECT id, status, details, executed_at
+	FROM execution_logs
+	WHERE relay_id=$1
+	ORDER BY executed_at DESC
+	LIMIT 50`
+	rows, err := s.db.Query(ctx, query, relayID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var logs []ExecutionLog
+	for rows.Next() {
+		var l ExecutionLog
+		if err := rows.Scan(&l.ID, &l.Status, &l.Details, &l.ExecutedAt); err != nil {
+			return nil, err
+		}
+		logs = append(logs, l)
+	}
+	return logs, nil
 }

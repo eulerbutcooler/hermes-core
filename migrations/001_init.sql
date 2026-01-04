@@ -21,6 +21,13 @@ CREATE TABLE IF NOT EXISTS relay_actions(
     sort_order INT DEFAULT 1
 )
 
+CREATE TABLE IF NOT EXISTS execution_logs(
+    id SERIAL PRIMARY KEY,
+    relay_id TEXT REFERENCES relays(id) ON DELETE CASCADE,
+    status TEXT NOT NULL,
+    details TEXT,
+    executed_at TIMESTAMP DEFAULT NOW())
+
 INSERT INTO users(username, email)
 VALUES ('testuser', 'test@gmail.com`)
 ON CONFLICT (email) DO NOTHING;
