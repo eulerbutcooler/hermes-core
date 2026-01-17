@@ -1,9 +1,11 @@
 package main
 
 import (
-	"log"
+	"log/slog"
 	"net/http"
+	"os"
 
+	"github.com/eulerbutcooler/hermes-common/pkg/logger"
 	"github.com/eulerbutcooler/hermes-core/internal/api"
 	"github.com/eulerbutcooler/hermes-core/internal/config"
 	"github.com/eulerbutcooler/hermes-core/internal/db"
@@ -12,19 +14,27 @@ import (
 
 func main() {
 	cfg := config.LoadConfig()
+	appLogger := logger.New("hermes-core", cfg.Environment, cfg.LogLevel)
+
+	appLogger.Info("starting Hermes Core API",
+		slog.String("version", "1.0.0"),
+		slog.String("port", cfg.Port),
+	)
 
 	pool, err := db.New(cfg.DatabaseURL)
 	if err != nil {
-		log.Fatalf("Fatal DB Error: %v", err)
+		appLogger.Error("database connection failed", slog.String("error", err.Error()))
 	}
 	defer pool.Close()
+	appLogger.Info("database connected")
 
 	relayStore := store.NewRelayStore(pool)
-	handler := api.NewHandler(relayStore)
+	handler := api.NewHandler(relayStore, appLogger)
 	router := api.NewRouter(handler)
 
-	log.Printf("Core running on port %s", cfg.Port)
+	appLogger.Info("server listening", slog.String("port", cfg.Port))
 	if err := http.ListenAndServe(":"+cfg.Port, router); err != nil {
-		log.Fatal(err)
+		appLogger.Error("server failed", slog.String("error", err.Error()))
+		os.Exit(1)
 	}
 }

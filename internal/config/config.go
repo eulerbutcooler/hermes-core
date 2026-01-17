@@ -8,6 +8,15 @@ import (
 type Config struct {
 	Port        string
 	DatabaseURL string
+	LogLevel    string
+	Environment string
+}
+
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
 }
 
 func LoadConfig() *Config {
@@ -23,5 +32,7 @@ func LoadConfig() *Config {
 	return &Config{
 		Port:        port,
 		DatabaseURL: dbURL,
+		LogLevel:    getEnv("LOG_LEVEL", "INFO"),
+		Environment: getEnv("ENV", "development"),
 	}
 }
