@@ -1,8 +1,10 @@
 package config
 
 import (
+	"errors"
 	"log"
 	"os"
+	"strconv"
 )
 
 type Config struct {
@@ -35,4 +37,34 @@ func LoadConfig() *Config {
 		LogLevel:    getEnv("LOG_LEVEL", "INFO"),
 		Environment: getEnv("ENV", "development"),
 	}
+}
+
+func (c *Config) Validate() error {
+	if c.Port == "" {
+		return errors.New("PORT can't be empty")
+	}
+	if _, err := strconv.Atoi(c.Port); err != nil {
+		return errors.New(("PORT must be a valid number"))
+	}
+	if c.DatabaseURL == "" {
+		return errors.New("DATABASE_URL can't be empty")
+	}
+	validLogLevels := map[string]bool{
+		"DEBUG": true,
+		"INFO":  true,
+		"WARN":  true,
+		"ERROR": true,
+	}
+	if !validLogLevels[c.LogLevel] {
+		return errors.New("LOG_LEVEL must be one of: DEBUG, INFO, WARN, ERROR")
+	}
+	validEnvironments := map[string]bool{
+		"development": true,
+		"staging":     true,
+		"production":  true,
+	}
+	if !validEnvironments[c.Environment] {
+		return errors.New("ENV must be one of: development, staging, production")
+	}
+	return nil
 }

@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -71,7 +72,14 @@ func (h *Handler) GetRelayLogs(w http.ResponseWriter, r *http.Request) {
 			slog.String("relay_id", relayID),
 			slog.String("error", err.Error()),
 		)
-		http.Error(w, "Failed to fetch logs", http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("Failed to fetch logs: %v", err), http.StatusInternalServerError)
+		return
 	}
+	h.logger.Info("fetched logs successfully",
+		slog.String("relay_id", relayID),
+		slog.Int("count", len(logs)),
+	)
+
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(logs)
 }

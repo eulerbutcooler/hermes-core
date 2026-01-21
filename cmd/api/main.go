@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"log/slog"
 	"net/http"
 	"os"
@@ -10,10 +11,15 @@ import (
 	"github.com/eulerbutcooler/hermes-core/internal/config"
 	"github.com/eulerbutcooler/hermes-core/internal/db"
 	"github.com/eulerbutcooler/hermes-core/internal/store"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	_ = godotenv.Load()
 	cfg := config.LoadConfig()
+	if err := cfg.Validate(); err != nil {
+		log.Fatalf("Invalid configuration: %v", err)
+	}
 	appLogger := logger.New("hermes-core", cfg.Environment, cfg.LogLevel)
 
 	appLogger.Info("starting Hermes Core API",

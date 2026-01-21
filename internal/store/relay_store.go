@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/eulerbutcooler/hermes-core/internal/models"
 	"github.com/google/uuid"
@@ -11,10 +12,10 @@ import (
 )
 
 type ExecutionLog struct {
-	ID         int    `json:"id"`
-	Status     string `json:"status"`
-	Details    string `json:"details"`
-	ExecutedAt string `json:"executed_at"`
+	ID         int       `json:"id"`
+	Status     string    `json:"status"`
+	Details    string    `json:"details"`
+	ExecutedAt time.Time `json:"executed_at"`
 }
 
 type RelayStore struct {
@@ -61,16 +62,22 @@ func (s *RelayStore) GetLogs(ctx context.Context, relayID string) ([]ExecutionLo
 	LIMIT 50`
 	rows, err := s.db.Query(ctx, query, relayID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("query failed: %w", err)
 	}
 	defer rows.Close()
 	var logs []ExecutionLog
 	for rows.Next() {
 		var l ExecutionLog
 		if err := rows.Scan(&l.ID, &l.Status, &l.Details, &l.ExecutedAt); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("scan failed: %w", err)
 		}
 		logs = append(logs, l)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows iteration error: %w", err)
+	}
+	if logs == nil {
+		logs = []ExecutionLog{}
 	}
 	return logs, nil
 }
